@@ -1,0 +1,19 @@
+{
+    "classes":{
+        "0": "safe_drive",
+        "1": "texting_right",
+        "2": "phonecall_right",
+        "3": "texting_left",
+        "4": "phonecall_left",
+        "5": "radio",
+        "6": "drinking",
+        "7": "reach_side",
+        "8": "hair_and_makeup",
+        "9": "talking_to_passenger",
+        "10": "reach_backseat",
+        "11": "change_gear",
+        "12": "standstill_or_waiting",
+        "13": "unclassified",
+        "100": "NAN"
+    }
+}
