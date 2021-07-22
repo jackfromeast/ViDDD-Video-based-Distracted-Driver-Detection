@@ -1,0 +1,5 @@
+raw_dataset/
+processed_dataset/
+data/
+others/
+code/vit_base_patch16_224_in21k.pth
