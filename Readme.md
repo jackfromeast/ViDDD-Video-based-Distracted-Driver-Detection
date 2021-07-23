@@ -99,7 +99,53 @@ https://zhuanlan.zhihu.com/p/81089256
 
 
 ## 目录结构
-
+```
+DDD
+├── code
+│   ├── __pycache__
+│   │   └── mypath.cpython-38.pyc
+│   ├── dataLoaders
+│   │   ├── DMD-labels.json
+│   │   ├── pic_dataset.py
+│   │   └── video_dataset.py
+│   ├── models
+│   │   └── vit_base_patch16_224_in21k.pth
+│   ├── mypath.py
+│   ├── network
+│   │   └── vit_model.py
+│   ├── process_raw_dataset.py # processed raw dataset and save them into processed_dataset
+│   ├── train.py
+│   └── utils.py
+|
+|
+├── data	# data ready for train
+│   └── DMD-clips-70
+│       ├── train
+│       └── val
+|
+|
+├── processed_dataset	# raw dataset after processed, but not ready for train
+│   ├── DMD-clips-70
+│   │   ├── change_gear
+│   │   ├── drinking
+│   │   ├── hair_and_makeup
+│   │   ├── phonecall_left
+│   │   ├── phonecall_right
+│   │   ├── radio
+│   │   ├── reach_backseat
+│   │   ├── reach_side
+│   │   ├── safe_drive
+│   │   ├── standstill_or_waiting
+│   │   ├── talking_to_passenger
+│   │   ├── texting_left
+│   │   ├── texting_right
+│   │   └── unclassified
+│   ├── DMD-clips-70.zip
+│   ├── driver_imgs_list.csv
+│   └── imgs
+│       └── train
+...
+```
 
 
 
