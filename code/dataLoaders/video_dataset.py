@@ -9,15 +9,16 @@ import cv2
 import numpy as np
 import json
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 from mypath import Path
 
 
 class VideoDataset(Dataset):
     """
-    A Dataset for a folder of videos. Expects the directory structure to be
-    directory->[train/val/test]->[class labels]->[videos]. Initializes with a list
-    of all file names, along with an array of labels, with label being automatically
-    inferred from the respective folder names.
+        A Dataset for a folder of videos. Expects the directory structure to be
+        directory->[train/val/test]->[class labels]->[videos]. Initializes with a list
+        of all file names, along with an array of labels, with label being automatically
+        inferred from the respective folder names.
         Args:
             dataset (str): Name of dataset. Defaults to 'DMD'.
             split (str): Determines which folder of the directory the dataset will read from. Defaults to 'train'.
@@ -72,7 +73,7 @@ class VideoDataset(Dataset):
     def __getitem__(self, index):
         # Loading and preprocessing.
         buffer = self.load_frames(self.fnames[index])
-        buffer = self.crop(buffer, self.clip_len, self.crop_size)
+        # buffer = self.crop(buffer, self.clip_len, self.crop_size)
         labels = np.array(self.label_array[index])
 
         if self.split == 'test':
@@ -164,6 +165,7 @@ class VideoDataset(Dataset):
         EXTRACT_FREQUENCY = 1
         if frame_count // EXTRACT_FREQUENCY < 70:
             print('Error. The clip only has %d frames which is less than 70 frames.' % frame_count)
+            return None
 
         count = 0
         i = 0
@@ -235,9 +237,9 @@ class VideoDataset(Dataset):
 
 
 if __name__ == "__main__":
-    from torch.utils.data import DataLoader
-    train_data = VideoDataset(dataset='DMD-lite-70', split='train', clip_len=70, preprocess=True)
-    train_loader = DataLoader(train_data, batch_size=100, shuffle=True, num_workers=4)
+    
+    train_data = VideoDataset(dataset='DMD-lite-70', split='train', clip_len=70, preprocess=False)
+    train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=1)
 
     for i, sample in enumerate(train_loader):
         inputs = sample[0]
