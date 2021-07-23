@@ -85,6 +85,7 @@ class Attention(nn.Module):
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop_ratio)
 
+
     def forward(self, x):
         # [batch_size, num_patches + 1, total_embed_dim]
         B, N, C = x.shape

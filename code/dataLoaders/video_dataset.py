@@ -15,18 +15,19 @@ from mypath import Path
 
 class VideoDataset(Dataset):
     """
-        A Dataset for a folder of videos. Expects the directory structure to be
-        directory->[train/val/test]->[class labels]->[videos]. Initializes with a list
-        of all file names, along with an array of labels, with label being automatically
-        inferred from the respective folder names.
-        Args:
-            dataset (str): Name of dataset. Defaults to 'DMD'.
-            split (str): Determines which folder of the directory the dataset will read from. Defaults to 'train'.
-            clip_len (int): Determines how many frames are there in each clip. Defaults to 70.
-            preprocess (bool): Determines whether to preprocess dataset. Default is False.
+    A Dataset for a folder of videos. Expects the directory structure to be
+    directory->[train/val/test]->[class labels]->[videos]. Initializes with a list
+    of all file names, along with an array of labels, with label being automatically
+    inferred from the respective folder names.
+    Args:
+        dataset (str): Name of dataset. Defaults to 'DMD'.
+        split (str): Determines which folder of the directory the dataset will read from. Defaults to 'train'.
+        clip_len (int): Determines how many frames are there in each clip. Defaults to 70.
+        preprocess (bool): Determines whether to preprocess dataset. Default is False.
+        transform(object): torchvison's transform
     """
 
-    def __init__(self, dataset='DMD-lite-70', split='train', clip_len=70, preprocess=False):
+    def __init__(self, dataset='DMD-lite-70', split='train', clip_len=70, preprocess=False, transform=None):
 
         self.root_dir, self.output_dir = Path.db_dir(dataset)
         folder = os.path.join(self.output_dir, split)
@@ -34,6 +35,7 @@ class VideoDataset(Dataset):
         self.clip_len = clip_len
         self.split = split
 
+        self.transform = transform
         self.resize_height = 249
         self.resize_width = 249
         self.crop_size = 112
@@ -73,15 +75,20 @@ class VideoDataset(Dataset):
     def __getitem__(self, index):
         # Loading and preprocessing.
         buffer = self.load_frames(self.fnames[index])
-        # buffer = self.crop(buffer, self.clip_len, self.crop_size)
         labels = np.array(self.label_array[index])
 
-        if self.split == 'test':
+        # Abandon self-written processor
+        # buffer = self.crop(buffer, self.clip_len, self.crop_size)
+        # if self.split == 'test':
             # Perform data augmentation
-            buffer = self.randomflip(buffer)
+            # buffer = self.randomflip(buffer)
 
-        buffer = self.normalize(buffer)
-        buffer = self.to_tensor(buffer)
+        # buffer = self.normalize(buffer)
+        # buffer = self.to_tensor(buffer)
+
+        if self.transform is not None:
+            buffer = self.transform(buffer)
+
         return torch.from_numpy(buffer), torch.from_numpy(labels)
 
     def check_integrity(self):
@@ -149,6 +156,7 @@ class VideoDataset(Dataset):
 
         print('Preprocessing finished.')
 
+
     def process_video(self, video, action_name, save_dir):
         # Initialize a VideoCapture object to read video data into a numpy array
         video_filename = video.split('.')[0]
@@ -186,27 +194,6 @@ class VideoDataset(Dataset):
         # Release the VideoCapture once it is no longer needed
         capture.release()
 
-    def randomflip(self, buffer):
-        """Horizontally flip the given image and ground truth randomly with a probability of 0.5."""
-
-        if np.random.random() < 0.5:
-            for i, frame in enumerate(buffer):
-                frame = cv2.flip(buffer[i], flipCode=1)
-                buffer[i] = cv2.flip(frame, flipCode=1)
-
-        return buffer
-
-
-    def normalize(self, buffer):
-        for i, frame in enumerate(buffer):
-            frame -= np.array([[[90.0, 98.0, 102.0]]])
-            buffer[i] = frame
-
-        return buffer
-
-    def to_tensor(self, buffer):
-        return buffer.transpose((3, 0, 1, 2))
-
     def load_frames(self, file_dir):
         frames = sorted([os.path.join(file_dir, img) for img in os.listdir(file_dir)])
         frame_count = len(frames)
@@ -217,6 +204,30 @@ class VideoDataset(Dataset):
 
         return buffer
 
+    # Abandon self-written processor
+    def randomflip(self, buffer):
+        """Horizontally flip the given image and ground truth randomly with a probability of 0.5."""
+
+        if np.random.random() < 0.5:
+            for i, frame in enumerate(buffer):
+                frame = cv2.flip(buffer[i], flipCode=1)
+                buffer[i] = cv2.flip(frame, flipCode=1)
+
+        return buffer
+
+    # Abandon self-written processor
+    def normalize(self, buffer):
+        for i, frame in enumerate(buffer):
+            frame -= np.array([[[90.0, 98.0, 102.0]]])
+            buffer[i] = frame
+
+        return buffer
+
+    # Abandon self-written processor
+    def to_tensor(self, buffer):
+        return buffer.transpose((3, 0, 1, 2))
+
+    # Abandon self-written processor
     def crop(self, buffer, clip_len, crop_size):
         # randomly select time index for temporal jittering
         time_index = np.random.randint(buffer.shape[0] - clip_len)
@@ -238,7 +249,7 @@ class VideoDataset(Dataset):
 
 if __name__ == "__main__":
     
-    train_data = VideoDataset(dataset='DMD-lite-70', split='train', clip_len=70, preprocess=False)
+    train_data = VideoDataset(dataset='DMD-lite-70', split='val', clip_len=70, preprocess=False)
     train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=1)
 
     for i, sample in enumerate(train_loader):

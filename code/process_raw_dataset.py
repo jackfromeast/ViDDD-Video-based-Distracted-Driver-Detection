@@ -27,9 +27,11 @@ def cut_video(v_path, save_path, frames_n=70):
     frames_n: 70
     """
 
-    cap = cv2.VideoCapture(v_path)  #获取视频对象
+    #获取视频对象
+    cap = cv2.VideoCapture(v_path)
 
-    if not cap.isOpened():  #判断视频是否能顺利打开读取，True为能打开，False为不能打开
+    #判断视频是否能顺利打开读取，True为能打开，False为不能打开
+    if not cap.isOpened():
         print("The video can't open successfully.")
         return None
     
@@ -46,7 +48,8 @@ def cut_video(v_path, save_path, frames_n=70):
     frame_count = 0 # 正在处理第 frame_count 个 frame
     clip_count = 0 # 正在保存第 clip_count 个 clip
     while(True):
-        success, a_frame = cap.read()   # 检查是否能正常读取帧 以及 当前帧的图像
+        # 检查是否能正常读取帧 以及 当前帧的图像
+        success, a_frame = cap.read()
 
         if success:
             frame_count += 1  # 注意这里从1开始计数 没有第0帧
@@ -61,12 +64,14 @@ def cut_video(v_path, save_path, frames_n=70):
                 if not os.path.exists(folder_path):
                     os.makedirs(folder_path)
                 
-                action = check_action(actions_dict, frame_count) # 在ann文件中读取该clip包含的动作
+                # 在ann文件中读取该clip包含的动作
+                action = check_action(actions_dict, frame_count)
                 clip_path = folder_path + '/' + folder_name + '_' + str(clip_count) + '_' + action + '.mp4'
 
                 videoWriter = cv2.VideoWriter(clip_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (int(width), int(height))) # 保存文件名、编码器、帧率、视频宽高
 
-                videoWriter.write(a_frame)  # 写入帧图像
+                # 写入帧图像
+                videoWriter.write(a_frame)
 
             else:
                 videoWriter.write(a_frame)
