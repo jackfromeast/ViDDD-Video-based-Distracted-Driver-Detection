@@ -15,6 +15,7 @@ from utils import train_one_epoch, evaluate
 from dataLoaders.pic_dataset import *
 from dataLoaders.video_dataset import *
 
+from video_vit import vvit
 
 def img_dataLoader(args, data_transform):
     data_df = process_data()
@@ -86,27 +87,31 @@ def main(args):
     if args.data_type == 'video':
         train_loader, val_loader = video_dataLoader(args, data_transform)
 
-    model = create_model(num_classes=10, has_logits=False).to(device)
+    vit = create_model(num_classes=10, has_logits=False).to(device)
 
     if args.weights != "":
         assert os.path.exists(args.weights), "weights file: '{}' not exist.".format(args.weights)
         weights_dict = torch.load(args.weights, map_location=device)
 
         # 删除不需要的权重
-        del_keys = ['head.weight', 'head.bias'] if model.has_logits \
+        del_keys = ['head.weight', 'head.bias'] if vit.has_logits \
             else ['pre_logits.fc.weight', 'pre_logits.fc.bias', 'head.weight', 'head.bias']
         for k in del_keys:
             del weights_dict[k]
-        print(model.load_state_dict(weights_dict, strict=False))
+        print(vit.load_state_dict(weights_dict, strict=False))
 
     if args.freeze_layers:
-        for name, para in model.named_parameters():
+        for name, para in vit.named_parameters():
             # 除head, pre_logits外，其他权重全部冻结
             if "head" not in name and "pre_logits" not in name:
                 para.requires_grad_(False)
             else:
                 print("training {}".format(name))
 
+                
+    gru = nn.GRU(128, 512,bidirectional=False, batch_first=True)
+    model = vvit(vit, gru, frame=70, hidden_dim=512, class_num=14).to(device)
+  
     pg = [p for p in model.parameters() if p.requires_grad]
     optimizer = optim.SGD(pg, lr=args.lr, momentum=0.9, weight_decay=5E-5)
     lf = lambda x: ((1 + math.cos(x * math.pi / args.epochs)) / 2) * (1 - args.lrf) + args.lrf  # cosine
