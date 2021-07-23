@@ -2,6 +2,7 @@ import os
 import re
 import json
 import cv2
+import shutil
 
 
 def rename_for_DMD(filespath):
@@ -147,10 +148,45 @@ def process_raw_dataset(raw_dataset_path, save_path):
             cut_video(raw_dataset_path + video_name, save_path)
             print("Video %s is done." % video_name)
     
-    
+
+
+def restructure(processed_dataset_path):
+    """
+    Restructure the dataset like the form as follows.
+        UCF-101
+        ├── ApplyEyeMakeup
+        │   ├── v_ApplyEyeMakeup_g01_c01.avi
+        │   └── ...
+        ├── ApplyLipstick
+        │   ├── v_ApplyLipstick_g01_c01.avi
+        │   └── ...
+        └── Archery
+        │   ├── v_Archery_g01_c01.avi
+        │   └── ...
+    """
+    for root_path, dirs, files in os.walk(processed_dataset_path):
+
+        for file_name in files:
+            file_path = root_path + '/' + file_name
+
+            class_name = re.split('[_.]', file_name)[4:-1]
+            class_name = '_'.join(class_name)
+            class_path = processed_dataset_path + class_name
+
+            if not os.path.exists(class_path):
+                os.makedirs(class_path)
+            
+            old_file = file_path
+            new_file = class_path + '/' + file_name
+
+            shutil.copyfile(old_file, new_file) # incase something is wrong
+            
+
 
 if __name__ == "__main__":
     # rename_for_DMD('./raw_dataset/DMD-lite')
     
     # cut_video('raw_dataset/DMD-lite/gA_2_s1.mp4', 'processed_dataset/DMD-clips-70/', 70)
-    process_raw_dataset('raw_dataset/DMD-lite/', 'processed_dataset/DMD-clips-70/')
+    # process_raw_dataset('raw_dataset/DMD-lite/', 'processed_dataset/DMD-clips-70/')
+
+    # restructure('processed_dataset/DMD-clips-70/')

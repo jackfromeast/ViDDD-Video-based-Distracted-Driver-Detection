@@ -1,5 +1,5 @@
 {
-    "classes":{
+    "labels":{
         "0": "safe_drive",
         "1": "texting_right",
         "2": "phonecall_right",
@@ -14,6 +14,5 @@
         "11": "change_gear",
         "12": "standstill_or_waiting",
         "13": "unclassified",
-        "100": "NAN"
     }
 }
