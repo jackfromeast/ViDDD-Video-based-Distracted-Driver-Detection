@@ -30,7 +30,7 @@ def disconnect():
 
 @sio.on('results', namespace='/s2c')
 def save_result(message):
-    print('[INFO]Received a result from server. Start to save it.')
+    print('[Results Retriever]Received a result from server. Updata the results.')
 
     global results_file, write_lock
     if results_file is None:
@@ -89,6 +89,7 @@ class CVClient(object):
                     },
                     namespace='/c2s')
             self.count += 1
+            print('[Frames Sender]Sended the %d frame to the server.' % self.count)
 
     def check_exit(self):
         pass
@@ -100,7 +101,7 @@ class CVClient(object):
 class Camera(object):
 
     def __init__(self, fps=30, video_source=0, streamer=None):
-        print(f"[INFO]Initializing camera class with {fps} fps and video_source={video_source}")
+        print(f"[Camera Capturer]Initializing camera class with {fps} fps and video_source={video_source}")
         self.fps = fps
         self.video_source = video_source
         self.camera = cv2.VideoCapture(self.video_source)
@@ -118,31 +119,27 @@ class Camera(object):
         self.sending_thread = None
         
     def run(self):
-        print("[INFO]Perparing threads")
+        print("[Camera Capturer]Perparing capture_thread and sending_thread.")
     
-        print("[INFO]Creating capture_thread")
+        # print("[INFO]Creating capture_thread")
         self.capture_thread = threading.Thread(target=self._capture_loop,daemon=True)
-        print("[INFO]Creating sending_thread")
+        # print("[INFO]Creating sending_thread")
         self.sending_thread = threading.Thread(target=self.__send_frame,daemon=True)
 
-        print("[INFO]Starting thread")
+        # print("[INFO]Starting threads")
         self.isrunning = True
 
         self.capture_thread.start()
         self.sending_thread.start()
-        print("[INFO]Threads started")
+        print("[Camera Capturer]Threads started")
 
     def _capture_loop(self):
-        dt = 1/self.fps
-        print("[INFO]Observation started")
+        print("[Camera Capturer]Camera observation started")
         while self.isrunning:
             v,frame = self.camera.read()
             if v:
                 # self.frames.append(im)
                 self.frames_q.put(frame)
-
-        time.sleep(dt)
-        print("[INFO]Thread stopped successfully")
 
     def __send_frame(self):
         while self.isrunning:
@@ -152,12 +149,12 @@ class Camera(object):
                 self.streamer.send_data(frame, ['success'])
 
     def stop(self):
-        print("[INFO]Stopping thread")
+        print("[Camera Capturer]Stopping capture_thread and sending_thread")
         self.isrunning = False
         self.release()
     
     def release(self):
-        print("[INFO]Release camera")
+        print("[Camera Capturer]Released camera")
         self.camera.release()
 
 
@@ -171,16 +168,16 @@ class Retriever(object):
         self.isrunning = False
 
     def run(self):
-        print("[INFO]Perparing threads")
+        print("[Retriever]Perparing retrieve_thread.")
     
-        print("[INFO]Creating retrieve_thread")
+        # print("[Retriever]Creating retrieve_thread")
         self.retrieve_thread = threading.Thread(target=self.__retrieve_results,daemon=True)
        
-        print("[INFO]Starting thread")
+        # print("[INFO]Starting thread")
         self.isrunning = True
 
         self.retrieve_thread.start()
-        print("[INFO]Threads started")
+        print("[Retriever]Threads started.")
 
     def __retrieve_results(self):
         while True:
@@ -188,11 +185,11 @@ class Retriever(object):
                 break
             time.sleep(self.time_interval)
             sio.emit('get_results', 'Give me the current results!', namespace='/s2c')
-            print('[INFO]Retrieve results from the server.')
+            print('[Retriever]Retrieve results from the server.')
 
     
     def stop(self):
-        print("[INFO]Stopping thread")
+        print("[Retriever]Stopping retrieve_thread")
         self.isrunning = False
 
             
@@ -213,7 +210,6 @@ def main(camera, server_addr, stream_fps):
         camera.sending_thread.join()
         retriever.retrieve_thread.join()
 
-        print("[INFO]Threads stoped")
 
     except KeyboardInterrupt:
         print("[INFO]Exiting...")

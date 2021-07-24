@@ -65,14 +65,8 @@ def disconnect_cv():
 def send_results(message):
     results = redis_client.get('results')
 
-    print(message)
-    print('-------------------\n')
-    print(results)
-    print('\n-------------------')
-
+    print("[Results Replier]Sending results to the client.")
     socketio.emit('results', results, namespace='/s2c')
-        
-    print('Sent a message to client.')
 
 
 @socketio.on('send_frame', namespace='/c2s')
@@ -87,7 +81,7 @@ def handle_cv_message(message):
     if frames_count % 70 == 0:
         video_buffer.put((frames_buffer, clips_count))
 
-        print('[INFO]worker_save_video thread started.')
+        print('[Clips Dumper] worker_save_video thread started.')
         worker_save_video = threading.Thread(target=save_video, daemon=True, args=(video_buffer.get()))
         worker_save_video.start()
         
@@ -99,16 +93,16 @@ def handle_cv_message(message):
 def save_video(frames, clips_count):
     save_path = './raw_dataset/test/'
     clip_file_name = 'test_' + str(clips_count) + '.mp4'
-    print(save_path+clip_file_name)
+    
     videoWriter = cv2.VideoWriter(save_path+clip_file_name, cv2.VideoWriter_fourcc(*'mp4v'), 30,(1080, 720))
 
-    print('[INFO]Start to save videos.')
+    # print('[INFO]Start to save videos.')
     for raw_frame in frames:
         frame = image_handler(raw_frame)
         videoWriter.write(frame)
 
     videoWriter.release()
-    print("worker_save_video Done!")
+    print("[Clips Dumper] the %s video clip has saved." % save_path+clip_file_name)
 
     model_predict(save_path+clip_file_name)
 
@@ -126,8 +120,7 @@ def model_setup():
     global MODEL
     if MODEL is None:
         # TODO: MODEL LOAD
-        print('[INFO]The MODEL has already loaded.')
-
+        print('[Predictor]The MODEL has already loaded.')
 
 
 def model_predict(video_path):
@@ -155,7 +148,7 @@ def save_result(new_results):
         new_results = previous_results + new_results
 
     redis_client.set('results', new_results)
-
+    print('[Predictor]The result has updated.')
 
 
 
