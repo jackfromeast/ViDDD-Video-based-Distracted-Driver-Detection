@@ -1,4 +1,5 @@
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, join_room, leave_room
+from flask_redis import FlaskRedis
 import cv2
 from flask import Flask, render_template, request
 import threading
@@ -8,18 +9,19 @@ import numpy as np
 from queue import Queue
 
 app = Flask(__name__)
+app.config['REDIS_URL'] = 'redis://127.0.0.1:6379/0'
+redis_client = FlaskRedis(app, decode_responses=True)
 socketio = SocketIO(app)
+
+
 global frames_count, clips_count, videoWriter, video_buffer, frames_buffer
 frames_count = 1
 clips_count = 1
-
 video_buffer = Queue()
 frames_buffer = []
 
-save_path = './test/'
-clip_file_name = 'test_' + str(clips_count) + '.mp4'
-videoWriter = cv2.VideoWriter(save_path+clip_file_name, cv2.VideoWriter_fourcc(*'mp4v'),
-                              30,(1080, 720))
+MODEL = None
+
 
 @app.route('/')
 def index():
@@ -37,26 +39,51 @@ def disconnect_web():
     print('[INFO] Web client disconnected: {}'.format(request.sid))
 
 
-@socketio.on('connect', namespace='/cv')
+@socketio.on('connect', namespace='/c2s')
 def connect_cv():
-    print('[INFO] CV client connected: {}'.format(request.sid))
+    # join_room('frame_senders', sid=request.sid)
+    print('[INFO] CV client connected: {} on c2s namespace.'.format(request.sid))
 
 
-@socketio.on('disconnect', namespace='/cv')
+@socketio.on('disconnect', namespace='/c2s')
 def disconnect_cv():
-    print('[INFO] CV client disconnected: {}'.format(request.sid))
+    # leave_room('frame_senders', sid=request.sid)
+    print('[INFO] CV client disconnected: {} on c2s namespace'.format(request.sid))
+
+@socketio.on('connect', namespace='/s2c')
+def connect_cv():
+    # join_room('result_receivers', sid=request.sid)
+    print('[INFO] CV client connected: {} on s2c namespace.'.format(request.sid))
+
+@socketio.on('disconnect', namespace='/s2c')
+def disconnect_cv():
+    # leave_room('result_receivers', sid=request.sid)
+    print('[INFO] CV client disconnected: {} on s2c namespace'.format(request.sid))
 
 
-@socketio.on('cv2server')
+@socketio.on('get_results', namespace='/s2c')
+def send_results(message):
+    results = redis_client.get('results')
+
+    print(message)
+    print('-------------------\n')
+    print(results)
+    print('\n-------------------')
+
+    socketio.emit('results', results, namespace='/s2c')
+        
+    print('Sent a message to client.')
+
+
+@socketio.on('send_frame', namespace='/c2s')
 def handle_cv_message(message):
-    print("[INFO]Receiving data from Client.")
+    # print("[INFO]Receiving data from Client.")
     # socketio.emit('server2web', message, namespace='/web')
     
     global frames_count, clips_count, videoWriter, video_buffer, frames_buffer
     frames_count += 1
     frames_buffer.append(message['image'])
 
-    print(frames_count)
     if frames_count % 70 == 0:
         video_buffer.put((frames_buffer, clips_count))
 
@@ -83,6 +110,8 @@ def save_video(frames, clips_count):
     videoWriter.release()
     print("worker_save_video Done!")
 
+    model_predict(save_path+clip_file_name)
+
 
 def image_handler(raw_image):
     items = re.split('[;,]', raw_image)
@@ -91,6 +120,44 @@ def image_handler(raw_image):
     img = base64.b64decode(image_in_64)
 
     return cv2.imdecode(np.array(bytearray(img), dtype='uint8'), cv2.IMREAD_UNCHANGED)
+
+
+def model_setup():
+    global MODEL
+    if MODEL is None:
+        # TODO: MODEL LOAD
+        print('[INFO]The MODEL has already loaded.')
+
+
+
+def model_predict(video_path):
+    global MODEL
+    if MODEL is None:
+        model_setup()
+    
+    # TODO: result = data_load_predict(video_path)
+    result = ('safe_drive', 67.32)
+
+    clip_index = re.split('[_./]', video_path)[-2]
+
+    data = clip_index + '-' + result[0] +  '-' + str(result[1]) + ';'
+
+    save_result(data)
+
+
+def save_result(new_results):
+    previous_results = redis_client.get('results')
+
+    if previous_results is None:
+        previous_results = new_results
+    else:
+
+        new_results = previous_results + new_results
+
+    redis_client.set('results', new_results)
+
+
+
 
 if __name__ == "__main__":
     server_ip = '127.0.0.1'
