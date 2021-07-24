@@ -124,6 +124,8 @@ A Guide to Action Recognition (2018) :
 
 
 
+<img src="../../截屏2021-07-22 下午11.59.41.png" alt="截屏2021-07-22 下午11.59.41" style="zoom: 200%;" />
+
 ## 5 Code 目录结构
 
 ```

@@ -249,7 +249,7 @@ class VideoDataset(Dataset):
 
 if __name__ == "__main__":
     
-    train_data = VideoDataset(dataset='DMD-lite-70', split='val', clip_len=70, preprocess=False)
+    train_data = VideoDataset(dataset='DMD-lite-70', split='train', clip_len=70, preprocess=False)
     train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=1)
 
     for i, sample in enumerate(train_loader):

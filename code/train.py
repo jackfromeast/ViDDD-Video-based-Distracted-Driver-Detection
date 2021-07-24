@@ -87,7 +87,7 @@ def main(args):
     if args.data_type == 'video':
         train_loader, val_loader = video_dataLoader(args, data_transform)
 
-    vit = create_model(num_classes=10, has_logits=False).to(device)
+    vit = create_model(num_classes=14, has_logits=False).to(device)
 
     if args.weights != "":
         assert os.path.exists(args.weights), "weights file: '{}' not exist.".format(args.weights)

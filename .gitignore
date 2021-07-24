@@ -4,3 +4,4 @@ data/
 others/
 code/models/vit_base_patch16_224_in21k.pth
 refer_papers/
+.DS_Store
