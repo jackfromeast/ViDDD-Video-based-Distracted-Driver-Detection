@@ -248,7 +248,6 @@ class VideoDataset(Dataset):
 
         return buffer
 
-
     @staticmethod
     def collate_fn(batch):
         images, labels = tuple(zip(*batch))

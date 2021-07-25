@@ -1,2 +1,5 @@
+numpy==1.21.0
+Flask_SocketIO==4.3.2
+opencv_python==4.5.3.56
 Flask==2.0.1
-Flask-SocketIO==4.2.1
+Flask_And_Redis==1.0.0

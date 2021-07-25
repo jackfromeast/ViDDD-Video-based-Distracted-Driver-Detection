@@ -28,7 +28,7 @@
 
  What we are going to do is distracted driver detection. On the embedded system side, we would use the camera to record the driver's behavior, and dump the video every 5s or 10s. Our current solution is to extract frames of this video under a proper time step in Raspberry Pi, and then send these packaged images to the server side as the raw input for the model prediction. The problem on this side is how to achieve a near real-time dectection. Because the Pi need to wait for the model's results and warn the driver through the buzzer.
 
-<img src="Readme.assets/Overview.png" alt="Overview" style="zoom:50%;" />
+<img src="Readme.assets/overview.png" alt="Overview.png" style="zoom:50%;" />
 
 
 ## 2 相关研究
@@ -95,13 +95,13 @@ A Guide to Action Recognition (2018) :
 
 ### 4.1 Dataset 数据集
 
-+ DMD Dataset Annotation 数据集标注
++ Dataset Annotation 数据集标注
 
-  使用DMD提供的标注工具：
+  We are so thankful to the video annotation tools provided by DMD.
 
-  https://github.com/Vicomtech/DMD-Driver-Monitoring-Dataset/blob/master/docs/setup_linux.md
+  https://github.com/Vicomtech/DMD-Driver-Monitoring-Dataset/
 
-  对于视频的处理使用FFmpeg以及OpenCV库，FFmpeg下载安装时记得让git走全局代理。
+  对于视频的处理使用FFmpeg或者OpenCV库，FFmpeg下载安装时记得让git走全局代理。
 
   <img src="Readme.assets/annotation_tool_info.png" alt="annotation_tool_info" style="zoom:75%;" />
 
@@ -120,17 +120,31 @@ A Guide to Action Recognition (2018) :
   - ToTensor
   - Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
 
-### 4.2 Image-based DDD Classificaiton
+### 4.2 Experiments and results
+
+### 4.2.1 Exp1 
+
++ exp targets: main architecture
++ dataset 
++ data Preprocess
++ network
++ results
 
 
 
-<img src="../../截屏2021-07-22 下午11.59.41.png" alt="截屏2021-07-22 下午11.59.41" style="zoom: 200%;" />
 
-## 4 Communication Architecture
+
+
+
+
+
+
+
+## 5 Communication Architecture
 
 ![communication](Readme.assets/communication.png)
 
-## 5 Code 目录结构
+## 6 Code 目录结构
 
 ```
 DDD
