@@ -15,26 +15,41 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
     data_loader = tqdm(data_loader)
     for step, data in enumerate(data_loader):
         images, labels = data
+        labels = labels.long()
         sample_num += images.shape[0]
 
         pred = model(images.to(device))
         pred_classes = torch.max(pred, dim=1)[1]
+
         accu_num += torch.eq(pred_classes, labels.to(device)).sum()
 
-        loss = loss_function(pred, labels.to(device))
-        loss.backward()
-        accu_loss += loss.detach()
+        
 
-        data_loader.desc = "[train epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
+        
+        loss = loss_function(pred, labels.to(device))
+        
+
+        
+        loss = loss/16
+        # 2.2 back propagation
+        loss.backward()
+
+
+        if((step+1)%16)==0:
+            accu_loss += (loss.detach() * 16)
+            data_loader.desc = "[train epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
                                                                                accu_loss.item() / (step + 1),
                                                                                accu_num.item() / sample_num)
 
-        if not torch.isfinite(loss):
-            print('WARNING: non-finite loss, ending training ', loss)
-            sys.exit(1)
+            if not torch.isfinite(loss):
+                print('WARNING: non-finite loss, ending training ', loss)
+                sys.exit(1)
+            
+                # 3. update parameters of net
+        # optimizer the net
+            optimizer.step()        # update parameters of net
+            optimizer.zero_grad() 
 
-        optimizer.step()
-        optimizer.zero_grad()
 
     return accu_loss.item() / (step + 1), accu_num.item() / sample_num
 
@@ -52,6 +67,7 @@ def evaluate(model, data_loader, device, epoch):
     data_loader = tqdm(data_loader)
     for step, data in enumerate(data_loader):
         images, labels = data
+        labels = labels.long()
         sample_num += images.shape[0]
 
         pred = model(images.to(device))
@@ -59,9 +75,15 @@ def evaluate(model, data_loader, device, epoch):
         accu_num += torch.eq(pred_classes, labels.to(device)).sum()
 
         loss = loss_function(pred, labels.to(device))
+        
+        loss = loss/16
+        
         accu_loss += loss
-
-        data_loader.desc = "[valid epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
+        
+        if((step+1)%16)==0:         
+        
+            accu_loss += loss * 16
+            data_loader.desc = "[valid epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
                                                                                accu_loss.item() / (step + 1),
                                                                                accu_num.item() / sample_num)
 
