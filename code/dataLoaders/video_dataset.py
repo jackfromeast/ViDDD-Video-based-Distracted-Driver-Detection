@@ -10,8 +10,26 @@ import numpy as np
 import json
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from mypath import Path
 
+class Path(object):
+    @staticmethod
+    def db_dir(database):
+        if database == 'DMD-lite-70':
+            # folder that contains class labels
+            root_dir = './processed_dataset/DMD-clips-70'
+
+            # Save preprocess data into output_dir
+            output_dir = './data/DMD-clips-70'
+
+            return root_dir, output_dir
+
+        else:
+            print('Database {} not available.'.format(database))
+            raise NotImplementedError
+
+    @staticmethod
+    def model_dir():
+        return './code/models/model-10.pth'
 
 class VideoDataset(Dataset):
     """
@@ -36,15 +54,15 @@ class VideoDataset(Dataset):
         self.split = split
 
         self.transform = transform
-        self.resize_height = 249
-        self.resize_width = 249
+        self.resize_height = 224
+        self.resize_width = 224
         self.crop_size = 112
 
         if not self.check_integrity():
             raise RuntimeError('Dataset not found or corrupted.' +
                                ' You need to download it from official website.')
 
-        if (not self.check_preprocess()) or preprocess:
+        if preprocess:
             print('Preprocessing of {} dataset, this will take long, but it will be done only once.'.format(dataset))
             self.preprocess()
 
@@ -53,8 +71,13 @@ class VideoDataset(Dataset):
         self.fnames, labels = [], []
         for label in sorted(os.listdir(folder)):
             for fname in os.listdir(os.path.join(folder, label)):
-                self.fnames.append(os.path.join(folder, label, fname))
+                if len(os.listdir(os.path.join(folder,label,fname))) != 70:
+                    continue
+                else:
+                    self.fnames.append(os.path.join(folder, label, fname))
+
                 labels.append(label)
+
 
         assert len(labels) == len(self.fnames)
         print('Number of {} videos: {:d}'.format(split, len(self.fnames)))
@@ -65,9 +88,9 @@ class VideoDataset(Dataset):
         self.label_array = np.array([self.label2index[label] for label in labels], dtype=int)
 
         if dataset == "DMD-lite-70":
-            if not os.path.exists('./code/dataloaders/DMD-labels.json'):
-                with open('./code/dataloaders/DMD-labels.json', 'w') as f:
-                    f.write(json.dumps(self.label2index, indent=4))
+           # if not os.path.exists('./DMD-labels.json'):
+            with open('./DMD-labels.json', 'w') as f:
+                f.write(json.dumps(self.label2index, indent=4))
 
     def __len__(self):
         return len(self.fnames)
@@ -80,10 +103,10 @@ class VideoDataset(Dataset):
         # Abandon self-written processor
         # buffer = self.crop(buffer, self.clip_len, self.crop_size)
         # if self.split == 'test':
-            # Perform data augmentation
-            # buffer = self.randomflip(buffer)
+        #     # Perform data augmentation
+        #     buffer = self.randomflip(buffer)
 
-        # buffer = self.normalize(buffer)
+        buffer = self.normalize(buffer)
         # buffer = self.to_tensor(buffer)
 
         if self.transform is not None:
@@ -97,27 +120,6 @@ class VideoDataset(Dataset):
         else:
             return True
 
-    def check_preprocess(self):
-        # TODO: Check image size in output_dir
-        if not os.path.exists(self.output_dir):
-            return False
-        elif not os.path.exists(os.path.join(self.output_dir, 'train')):
-            return False
-
-        for ii, video_class in enumerate(os.listdir(os.path.join(self.output_dir, 'train'))):
-            for video in os.listdir(os.path.join(self.output_dir, 'train', video_class)):
-                video_name = os.path.join(os.path.join(self.output_dir, 'train', video_class, video),
-                                    sorted(os.listdir(os.path.join(self.output_dir, 'train', video_class, video)))[0])
-                image = cv2.imread(video_name)
-                if np.shape(image)[0] != 249 or np.shape(image)[1] != 249:
-                    return False
-                else:
-                    break
-
-            if ii == 10:
-                break
-
-        return True
 
     def preprocess(self):
         if not os.path.exists(self.output_dir):
@@ -195,6 +197,7 @@ class VideoDataset(Dataset):
         capture.release()
 
     def load_frames(self, file_dir):
+        
         frames = sorted([os.path.join(file_dir, img) for img in os.listdir(file_dir)])
         frame_count = len(frames)
         buffer = np.empty((frame_count, self.resize_height, self.resize_width, 3), np.dtype('float32'))
@@ -246,17 +249,33 @@ class VideoDataset(Dataset):
         return buffer
 
 
+    @staticmethod
+    def collate_fn(batch):
+        images, labels = tuple(zip(*batch))
+        images_new = []
+        labels_new = []
+#         print(images[0].size())
+        for i in range(len(images)):
+            # print(images[i].size())
+            images_new.append(images[i])
+            labels_new.append(labels[i])
 
-if __name__ == "__main__":
-    
-    train_data = VideoDataset(dataset='DMD-lite-70', split='train', clip_len=70, preprocess=False)
-    train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=1)
+        images = torch.stack(images_new, dim=0)
+        labels = torch.as_tensor(labels_new)
+        return images, labels
 
-    for i, sample in enumerate(train_loader):
-        inputs = sample[0]
-        labels = sample[1]
-        print(inputs.size())
-        print(labels)
 
-        if i == 1:
-            break
+
+# if __name__ == "__main__":
+#
+#     train_data = VideoDataset(dataset='DMD-lite-70', split='val', clip_len=70, preprocess=False)
+#     train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=1)
+
+    # for i, sample in enumerate(train_loader):
+    #     inputs = sample[0]
+    #     labels = sample[1]
+    #     print(inputs.size())
+    #     print(labels)
+    #
+    #     if i == 1:
+    #         break
