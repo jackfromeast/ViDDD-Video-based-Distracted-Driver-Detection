@@ -194,4 +194,4 @@ if __name__ == "__main__":
     # cut_video('raw_dataset/DMD-lite/gA_2_s1.mp4', 'processed_dataset/DMD-clips-70/', 70)
     # process_raw_dataset('raw_dataset/DMD-lite/', 'processed_dataset/DMD-clips-70/')
 
-    # restructure('processed_dataset/DMD-clips-70/')
+    restructure('processed_dataset/DMD-clips-70/')
