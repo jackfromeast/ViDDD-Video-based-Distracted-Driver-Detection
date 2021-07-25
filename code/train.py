@@ -14,8 +14,8 @@ from utils import train_one_epoch, evaluate
 
 from dataLoaders.pic_dataset import *
 from dataLoaders.video_dataset import *
-
-from video_vit import vvit
+from torch import nn
+from network.video_vit import vvit
 
 def img_dataLoader(args, data_transform):
     data_df = process_data()
@@ -58,8 +58,8 @@ def video_dataLoader(args, data_transform):
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
     print('Using {} dataloader workers every process'.format(nw))
 
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=nw)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True, num_workers=nw)
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=nw,collate_fn=train_data.collate_fn)
+    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True, num_workers=nw,collate_fn=val_data.collate_fn)
 
     return train_loader, val_loader
 
@@ -81,13 +81,15 @@ def main(args):
                                    transforms.ToTensor(),
                                    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])}
 
-    if args.data_type == 'img':
-        train_loader, val_loader = img_dataLoader(args, data_transform)
+    # if args.data_type == 'img':
+    #     train_loader, val_loader = img_dataLoader(args, data_transform)
     
     if args.data_type == 'video':
         train_loader, val_loader = video_dataLoader(args, data_transform)
 
-    vit = create_model(num_classes=14, has_logits=False).to(device)
+    vit = create_model(num_classes=128, has_logits=False).to(device)
+
+
 
     if args.weights != "":
         assert os.path.exists(args.weights), "weights file: '{}' not exist.".format(args.weights)
@@ -95,7 +97,8 @@ def main(args):
 
         # 删除不需要的权重
         del_keys = ['head.weight', 'head.bias'] if vit.has_logits \
-            else ['pre_logits.fc.weight', 'pre_logits.fc.bias', 'head.weight', 'head.bias']
+            else ['head.weight', 'head.bias']
+            # else ['pre_logits.fc.weight', 'pre_logits.fc.bias', 'head.weight', 'head.bias']
         for k in del_keys:
             del weights_dict[k]
         print(vit.load_state_dict(weights_dict, strict=False))
@@ -108,16 +111,19 @@ def main(args):
             else:
                 print("training {}".format(name))
 
-                
-    gru = nn.GRU(128, 512,bidirectional=False, batch_first=True)
-    model = vvit(vit, gru, frame=70, hidden_dim=512, class_num=14).to(device)
-  
+    gru = nn.GRU(128, 64,bidirectional=False, batch_first=True)
+    model = vvit(vit, gru, frame=70, hidden_dim=64, class_num=3).to(device)
     pg = [p for p in model.parameters() if p.requires_grad]
     optimizer = optim.SGD(pg, lr=args.lr, momentum=0.9, weight_decay=5E-5)
     lf = lambda x: ((1 + math.cos(x * math.pi / args.epochs)) / 2) * (1 - args.lrf) + args.lrf  # cosine
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)
 
     for epoch in range(args.epochs):
+        val_loss, val_acc = evaluate(model=model,
+                                     data_loader=val_loader,
+                                     device=device,
+                                     epoch=epoch)
+        
         train_loss, train_acc = train_one_epoch(model=model,
                                                 optimizer=optimizer,
                                                 data_loader=train_loader,
@@ -134,7 +140,6 @@ def main(args):
 
         print("Training: epoch {}, loss {}, accuracy {}".format(epoch, train_loss, train_acc))
         print("Validing: epoch {}, loss {}, accuracy {}".format(epoch, val_loss, val_acc))
-
         torch.save(model.state_dict(), "./weights/model-{}.pth".format(epoch))
 
 
@@ -144,7 +149,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_classes', type=int, default=14)
     parser.add_argument('--val-size', type=int, default=0.2)
     parser.add_argument('--epochs', type=int, default=10)
-    parser.add_argument('--batch-size', type=int, default=4)
+    parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--lrf', type=float, default=0.01)
 
@@ -154,11 +159,11 @@ if __name__ == '__main__':
                         default="/data/flower_photos")
     parser.add_argument('--model-name', default='', help='create model name')
 
-    parser.add_argument('--weights', type=str, default='./vit_base_patch16_224_in21k.pth',
+    parser.add_argument('--weights', type=str, default='./models/model-10.pth',
                         help='initial weights path')
 
     # 是否冻结权重
-    parser.add_argument('--freeze-layers', type=bool, default=True)
+    parser.add_argument('--freeze-layers', type=bool, default=False)
     parser.add_argument('--device', default='cuda:0', help='device id (i.e. 0 or 0,1 or cpu)')
 
     # 视频相关
