@@ -35,6 +35,7 @@ def predict(model, video_path):
          transforms.ToTensor(),
          transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
 
+
     with torch.no_grad():
         # for q in os.listdir(test_dir):
         predict_dic = {
@@ -48,7 +49,7 @@ def predict(model, video_path):
         _, output_dir = Path.db_dir('test')
         video_folder = video_path.split('/')[-1].split('.')[0]
         
-        for i in range(args.frames_len):
+        for i in range(0, args.frames_len, 14):
             img = Image.open(output_dir +'/'+video_folder + '/' + str(i)+'.jpg')
             img = data_transform(img)
             img = torch.unsqueeze(img, dim=0)
@@ -71,7 +72,7 @@ def predict(model, video_path):
 
         predict_sort = sorted(predict_dic.items(), key=lambda item: len(item[1]))
 
-        if predict_sort[-1][0] == 'safe' and predict_sort[-1][1] >= 50:
+        if predict_sort[-1][0] == 'safe' and predict_sort[-1][1] >= 5:
             label = 'safe'
         elif predict_sort[-1][0] == 'sing_hand':
             if predict_sort[-2][1] != 0:
@@ -89,4 +90,4 @@ def predict(model, video_path):
 
 if __name__ == '__main__':
     model = load_model()
-    predict(model, './raw_dataset/test/test_61.mp4')
+    print(predict(model, './raw_dataset/test/test_4.mp4'))

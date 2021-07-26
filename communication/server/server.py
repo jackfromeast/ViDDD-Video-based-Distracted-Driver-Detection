@@ -19,7 +19,7 @@ socketio = SocketIO(app)
 
 
 global frames_count, clips_count, videoWriter, video_buffer, frames_buffer
-frames_count = 1
+frames_count = 0
 clips_count = 1
 video_buffer = Queue()
 frames_buffer = []
@@ -47,6 +47,10 @@ def disconnect_web():
 def connect_cv():
     # join_room('frame_senders', sid=request.sid)
     print('[INFO] CV client connected: {} on c2s namespace.'.format(request.sid))
+
+    global MODEL
+    if MODEL is None:
+        model_setup()
 
 
 @socketio.on('disconnect', namespace='/c2s')
@@ -102,10 +106,13 @@ def save_video(frames, clips_count):
     videoWriter = cv2.VideoWriter(save_path+clip_file_name, cv2.VideoWriter_fourcc(*'mp4v'), 30,(640, 480))
 
     # print('[INFO]Start to save videos.')
+    count = 0
     for raw_frame in frames:
         frame = image_handler(raw_frame)
         videoWriter.write(frame)
+        count += 1
 
+    print('total count %d' % count)
     videoWriter.release()
     print("[Clips Dumper] the %s video clip has saved." % save_path+clip_file_name)
 
@@ -133,16 +140,21 @@ def model_predict(video_path):
     if MODEL is None:
         model_setup()
     
+    print('[Model Predictor]Start to predict video %s' % video_path.split('/')[-1])
     result = predict(MODEL, video_path)
 
     clip_index = re.split('[_./]', video_path)[-2]
 
     data = clip_index + '-' + result[0] +  '-' + '%.2f'%result[1] + ';'
 
+    print(data)
+    print('[Model Predictor]Start to save the result.')
     save_result(data)
 
 
 def save_result(new_results):
+    print(save_result)
+
     previous_results = redis_client.get('results')
 
     if previous_results is None:
@@ -150,6 +162,7 @@ def save_result(new_results):
     else:
 
         new_results = previous_results + new_results
+        print(new_results)
 
     redis_client.set('results', new_results)
     print('[Predictor]The result has updated.')
