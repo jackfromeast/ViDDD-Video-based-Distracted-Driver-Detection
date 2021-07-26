@@ -10,6 +10,15 @@ class Path(object):
 
             return root_dir, output_dir
 
+        if database == 'test':
+            # folder that contains class labels
+            root_dir = './processed_dataset/test'
+
+            # Save preprocess data into output_dir
+            output_dir = './data/test'
+
+            return root_dir, output_dir
+
         else:
             print('Database {} not available.'.format(database))
             raise NotImplementedError

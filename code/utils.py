@@ -2,6 +2,11 @@ import sys
 import torch
 from tqdm import tqdm
 from dataLoaders.video_dataset import *
+import re
+import mypath
+import config
+
+args = config.parse_opt()
 
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch):
@@ -90,26 +95,15 @@ def evaluate(model, data_loader, device, epoch):
     return accu_loss.item() / (step + 1), accu_num.item() / sample_num
 
 
-
-
-root_dir = 'raw_dataset/test'
-output_dir = 'raw_dataset/test_pic'
-resize_height = 224
-resize_width = 224
-crop_size = 112
-weight_path = './models/model-11.pth'
-
-def preprocess():
-    for file in os.listdir(root_dir):
-        test_input = os.path.join(root_dir, file)
-        process_video(test_input, file)
-    print('Preprocessing finished.')
-
-
-def process_video(video,video_name):
+root_dir, output_dir = Path.db_dir('test')
+def process_video(video):
+    video_name = video.split('/')[-1]
     video_name = video_name.split('.')[0]
+
+    root_dir, output_dir = Path.db_dir('test')
     if not os.path.exists(os.path.join(output_dir, video_name)):
         os.mkdir(os.path.join(output_dir, video_name))
+
 
     capture = cv2.VideoCapture(video)
 
@@ -133,9 +127,9 @@ def process_video(video,video_name):
             continue
 
         if count % EXTRACT_FREQUENCY == 0:
-            if (frame_height != resize_height) or (frame_width != resize_width):
-                frame = cv2.resize(frame, (resize_width, resize_height))
-            cv2.imwrite(filename=os.path.join(output_dir, video_name, '0000{}.jpg'.format(str(i))), img=frame)
+            if (frame_height != args.resize_height) or (frame_width != args.resize_width):
+                frame = cv2.resize(frame, (args.resize_width, args.resize_height))
+            cv2.imwrite(filename=os.path.join(output_dir, video_name, '{}.jpg'.format(str(i))), img=frame)
             i += 1
         count += 1
     capture.release()
@@ -143,7 +137,7 @@ def process_video(video,video_name):
 def load_frames(file_dir):
     frames = sorted([os.path.join(file_dir, img) for img in os.listdir(file_dir)])
     frame_count = len(frames)
-    buffer = np.empty((frame_count, resize_height, resize_width, 3), np.dtype('float32'))
+    buffer = np.empty((frame_count, args.resize_height, args.resize_width, 3), np.dtype('float32'))
     for i, frame_name in enumerate(frames):
         frame = np.array(cv2.imread(frame_name)).astype(np.float64)
         buffer[i] = frame
@@ -164,3 +158,5 @@ def prepare_data():
     buffer = normalize(buffer)
     return torch.from_numpy(buffer)
 
+if __name__ == '__main__':
+    process_video('./raw_dataset/test/test_61.mp4')

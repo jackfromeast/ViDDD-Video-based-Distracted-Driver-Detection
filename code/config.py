@@ -16,14 +16,14 @@ def parse_opt():
     #                     default="/data/flower_photos")
     parser.add_argument('--model-name', default='', help='create model name')
 
-    parser.add_argument('--weights', type=str, default='code/models/vit_base_patch16_224_in21k.pth',
-                        help='initial weights path')
-
     # 是否冻结权重
     parser.add_argument('--freeze-layers', type=bool, default=True)
     parser.add_argument('--device', default='cuda:0', help='device id (i.e. 0 or 0,1 or cpu)')
 
     # 视频相关
+    parser.add_argument('--resize_height', type=int, default=224)
+    parser.add_argument('--resize_width', type=int, default=224)
+    parser.add_argument('--crop_size', type=int, default=112)
     parser.add_argument('--frames-len', type=int, default=70)
 
 
@@ -35,6 +35,9 @@ def parse_opt():
     parser.add_argument('--vvit-hidden-dim', type=int, default=128)
     parser.add_argument('--vvit-gru-hidden-dim', type=int, default=64)
     # parser.add_argument('--vvit-hidden-dim', type=int, default=70)
+
+    parser.add_argument('--weights', type=str, default='code/models/model-11.pth',
+                        help='initial weights path')
 
 
     args = parser.parse_args()

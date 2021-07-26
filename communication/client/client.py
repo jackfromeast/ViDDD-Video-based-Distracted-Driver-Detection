@@ -46,10 +46,12 @@ def save_result(message):
 
 
 class CVClient(object):
-    def __init__(self, server_addr, stream_fps):
+    def __init__(self, server_addr, stream_fps, cam_width, cam_height):
         self.server_addr = server_addr
         self.server_port = 5001
         self._stream_fps = stream_fps
+        self.cam_height = cam_height
+        self.cam_width = cam_width
         self._last_update_t = time.time()
         self._wait_t = (1/self._stream_fps)
 
@@ -79,8 +81,8 @@ class CVClient(object):
         cur_t = time.time()
         if cur_t - self._last_update_t > self._wait_t:
             self._last_update_t = cur_t
-            if frame.shape != (1080, 720, 3):
-                frame = cv2.resize(frame, (1080, 720))
+            if frame.shape != (self.cam_width, self.cam_height, 3):
+                frame = cv2.resize(frame, (self.cam_width, self.cam_height))
             sio.emit(
                     'send_frame',
                     {
@@ -100,15 +102,15 @@ class CVClient(object):
 
 class Camera(object):
 
-    def __init__(self, fps=30, video_source=0, streamer=None):
+    def __init__(self, fps=30, video_source=0, streamer=None, cam_width, cam_height):
         print(f"[Camera Capturer]Initializing camera class with {fps} fps and video_source={video_source}")
         self.fps = fps
         self.video_source = video_source
         self.camera = cv2.VideoCapture(self.video_source)
 
         self.camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # the buffer can only contain 1 frame to ensure that everytime you read from the camera, it is the lastest frame.
-        self.camera.set(3, 1080) # set width
-        self.camera.set(4, 720)  # set height
+        self.camera.set(3, cam_width) # set width
+        self.camera.set(4, cam_height)  # set height
         
         self.frames_q = Queue()
         self.isrunning = False
@@ -194,11 +196,11 @@ class Retriever(object):
 
             
 
-def main(camera, server_addr, stream_fps):
+def main(camera, server_addr, stream_fps, cam_width, cam_height):
     streamer = CVClient(server_addr, stream_fps).setup()
 
     try:
-        camera = Camera(stream_fps, camera, streamer)
+        camera = Camera(stream_fps, camera, streamer, cam_width, cam_height)
         start = time.time()
         camera.run()
 
@@ -233,10 +235,15 @@ def main(camera, server_addr, stream_fps):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='alwaysAI Video Streamer')
+    parser = argparse.ArgumentParser(description='Video Streamer Client')
     parser.add_argument(
             '--camera', type=int, default='0',
             help='The camera index to stream from.')
+    parser.add_argument(
+            '--camera-width', type=int, default=640)
+    parser.add_argument(
+            '--camera-height', type=int, default=480)
+
     parser.add_argument(
             '--use-streamer',  action='store_true',
             help='Use the embedded streamer instead of connecting to the server.')
@@ -251,4 +258,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    main(args.camera, args.server_addr, args.stream_fps)
+    main(args.camera, args.server_addr, args.stream_fps, args.camera_width, args.camera_height)

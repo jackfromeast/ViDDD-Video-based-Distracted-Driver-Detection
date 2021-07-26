@@ -1,3 +1,6 @@
+import sys
+sys.path.append('./code')
+
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_redis import FlaskRedis
 import cv2
@@ -7,6 +10,7 @@ import base64
 import re
 import numpy as np
 from queue import Queue
+from predict import load_model, predict
 
 app = Flask(__name__)
 app.config['REDIS_URL'] = 'redis://127.0.0.1:6379/0'
@@ -95,7 +99,7 @@ def save_video(frames, clips_count):
     save_path = './raw_dataset/test/'
     clip_file_name = 'test_' + str(clips_count) + '.mp4'
     
-    videoWriter = cv2.VideoWriter(save_path+clip_file_name, cv2.VideoWriter_fourcc(*'mp4v'), 30,(1080, 720))
+    videoWriter = cv2.VideoWriter(save_path+clip_file_name, cv2.VideoWriter_fourcc(*'mp4v'), 30,(640, 480))
 
     # print('[INFO]Start to save videos.')
     for raw_frame in frames:
@@ -120,7 +124,7 @@ def image_handler(raw_image):
 def model_setup():
     global MODEL
     if MODEL is None:
-        # TODO: MODEL LOAD
+        MODEL = load_model()
         print('[Predictor]The MODEL has already loaded.')
 
 
@@ -129,12 +133,11 @@ def model_predict(video_path):
     if MODEL is None:
         model_setup()
     
-    # TODO: result = data_load_predict(video_path)
-    result = ('safe_drive', 67.32)
+    result = predict(MODEL, video_path)
 
     clip_index = re.split('[_./]', video_path)[-2]
 
-    data = clip_index + '-' + result[0] +  '-' + str(result[1]) + ';'
+    data = clip_index + '-' + result[0] +  '-' + '%.2f'%result[1] + ';'
 
     save_result(data)
 
