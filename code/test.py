@@ -10,6 +10,7 @@ import json
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
+opt = config.parse_opt()
 
 class Path(object):
     @staticmethod

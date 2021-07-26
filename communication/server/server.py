@@ -65,8 +65,9 @@ def disconnect_cv():
 def send_results(message):
     results = redis_client.get('results')
 
-    print("[Results Replier]Sending results to the client.")
-    socketio.emit('results', results, namespace='/s2c')
+    if results is not None:
+        print("[Results Replier]Sending results to the client.")
+        socketio.emit('results', results, namespace='/s2c')
 
 
 @socketio.on('send_frame', namespace='/c2s')

@@ -11,25 +11,8 @@ import json
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
-class Path(object):
-    @staticmethod
-    def db_dir(database):
-        if database == 'DMD-lite-70':
-            # folder that contains class labels
-            root_dir = './processed_dataset/DMD-clips-70'
+from mypath import Path
 
-            # Save preprocess data into output_dir
-            output_dir = './data/DMD-clips-70'
-
-            return root_dir, output_dir
-
-        else:
-            print('Database {} not available.'.format(database))
-            raise NotImplementedError
-
-    @staticmethod
-    def model_dir():
-        return './code/models/model-10.pth'
 
 class VideoDataset(Dataset):
     """
@@ -266,15 +249,15 @@ class VideoDataset(Dataset):
 
 
 # if __name__ == "__main__":
-#
-#     train_data = VideoDataset(dataset='DMD-lite-70', split='val', clip_len=70, preprocess=False)
-#     train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=1)
 
-    # for i, sample in enumerate(train_loader):
-    #     inputs = sample[0]
-    #     labels = sample[1]
-    #     print(inputs.size())
-    #     print(labels)
-    #
-    #     if i == 1:
-    #         break
+#     train_data = VideoDataset(dataset='DMD-lite-70', split='train', clip_len=70, preprocess=False)
+#     train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=8)
+
+#     for i, sample in enumerate(train_loader):
+#         inputs = sample[0]
+#         labels = sample[1]
+#         print(inputs.size())
+#         print(labels)
+    
+#         if i == 1:
+#             break
