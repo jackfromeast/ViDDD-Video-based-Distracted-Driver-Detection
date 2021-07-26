@@ -15,6 +15,7 @@ from predict import load_model, predict
 app = Flask(__name__)
 app.config['REDIS_URL'] = 'redis://127.0.0.1:6379/0'
 redis_client = FlaskRedis(app, decode_responses=True)
+redis_client.delete('results') # delete previous results.
 socketio = SocketIO(app)
 
 

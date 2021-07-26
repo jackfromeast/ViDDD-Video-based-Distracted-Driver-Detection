@@ -72,7 +72,7 @@ def predict(model, video_path):
 
         predict_sort = sorted(predict_dic.items(), key=lambda item: len(item[1]))
 
-        if predict_sort[-1][0] == 'safe' and predict_sort[-1][1] >= 5:
+        if predict_sort[-1][0] == 'safe' and len(predict_sort[-1][1]) >= 3:
             label = 'safe'
         elif predict_sort[-1][0] == 'sing_hand':
             if predict_sort[-2][1] != 0:
