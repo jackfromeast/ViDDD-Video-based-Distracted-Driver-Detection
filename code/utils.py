@@ -1,7 +1,7 @@
 import sys
 import torch
 from tqdm import tqdm
-
+from dataLoaders.video_dataset import *
 
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch):
@@ -88,3 +88,79 @@ def evaluate(model, data_loader, device, epoch):
                                                                                accu_num.item() / sample_num)
 
     return accu_loss.item() / (step + 1), accu_num.item() / sample_num
+
+
+
+
+root_dir = 'raw_dataset/test'
+output_dir = 'raw_dataset/test_pic'
+resize_height = 224
+resize_width = 224
+crop_size = 112
+weight_path = './models/model-11.pth'
+
+def preprocess():
+    for file in os.listdir(root_dir):
+        test_input = os.path.join(root_dir, file)
+        process_video(test_input, file)
+    print('Preprocessing finished.')
+
+
+def process_video(video,video_name):
+    video_name = video_name.split('.')[0]
+    if not os.path.exists(os.path.join(output_dir, video_name)):
+        os.mkdir(os.path.join(output_dir, video_name))
+
+    capture = cv2.VideoCapture(video)
+
+    frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    frame_width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    # Make sure splited video has at least 16 frames
+    EXTRACT_FREQUENCY = 1
+    if frame_count // EXTRACT_FREQUENCY < 70:
+        print('Error. The clip only has %d frames which is less than 70 frames.' % frame_count)
+        return None
+
+    count = 0
+    i = 0
+    retaining = True
+
+    while (count < frame_count and retaining):
+        retaining, frame = capture.read()
+        if frame is None:
+            continue
+
+        if count % EXTRACT_FREQUENCY == 0:
+            if (frame_height != resize_height) or (frame_width != resize_width):
+                frame = cv2.resize(frame, (resize_width, resize_height))
+            cv2.imwrite(filename=os.path.join(output_dir, video_name, '0000{}.jpg'.format(str(i))), img=frame)
+            i += 1
+        count += 1
+    capture.release()
+
+def load_frames(file_dir):
+    frames = sorted([os.path.join(file_dir, img) for img in os.listdir(file_dir)])
+    frame_count = len(frames)
+    buffer = np.empty((frame_count, resize_height, resize_width, 3), np.dtype('float32'))
+    for i, frame_name in enumerate(frames):
+        frame = np.array(cv2.imread(frame_name)).astype(np.float64)
+        buffer[i] = frame
+    return buffer
+
+def normalize(buffer):
+    for i, frame in enumerate(buffer):
+        frame -= np.array([[[0.5,0.5,0.5]]])
+        buffer[i] = frame
+
+    return buffer
+
+
+def prepare_data():
+    for pic_file in sorted(os.listdir(output_dir)):
+        fnames = os.path.join(output_dir, pic_file)
+    buffer = load_frames(fnames)
+    buffer = normalize(buffer)
+    return torch.from_numpy(buffer)
+
