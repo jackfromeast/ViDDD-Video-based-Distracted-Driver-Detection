@@ -66,7 +66,7 @@ class CVClient(object):
                 'http://{}:{}'.format(self.server_addr, self.server_port),
                 namespaces=['/c2s', '/s2c'])   
 
-        time.sleep(3)
+        time.sleep(5)
         return self
 
     def _convert_image_to_jpeg(self, image):
@@ -102,7 +102,7 @@ class CVClient(object):
 
 class Camera(object):
 
-    def __init__(self, fps=30, video_source=0, streamer=None, cam_width, cam_height):
+    def __init__(self, fps=30, video_source=0, streamer=None, cam_width=640, cam_height=480):
         print(f"[Camera Capturer]Initializing camera class with {fps} fps and video_source={video_source}")
         self.fps = fps
         self.video_source = video_source
@@ -197,7 +197,7 @@ class Retriever(object):
             
 
 def main(camera, server_addr, stream_fps, cam_width, cam_height):
-    streamer = CVClient(server_addr, stream_fps).setup()
+    streamer = CVClient(server_addr, stream_fps, cam_width, cam_height).setup()
 
     try:
         camera = Camera(stream_fps, camera, streamer, cam_width, cam_height)
