@@ -124,7 +124,7 @@ In the ViDDD model, our input video intercepts 70 consecutive frames of pictures
 
 ### 4.2 Experiments and results
 
-<img src="Readme.assets/result1.png" alt="result1" style="zoom:48%;" />
+<img src="Readme.assets/result1.png" alt="result1" style="zoom:50%;" />
 
 <img src="Readme.assets/result2.png" alt="result2" style="zoom:50%;" />
 
