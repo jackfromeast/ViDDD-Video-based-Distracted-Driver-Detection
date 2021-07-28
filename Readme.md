@@ -28,7 +28,7 @@
 
  What we are going to do is distracted driver detection. On the embedded system side, we would use the camera to record the driver's behavior, and dump the video every 5s or 10s. Our current solution is to extract frames of this video under a proper time step in Raspberry Pi, and then send these packaged images to the server side as the raw input for the model prediction. The problem on this side is how to achieve a near real-time dectection. Because the Pi need to wait for the model's results and warn the driver through the buzzer.
 
-<img src="Readme.assets/overview.png" alt="Overview.png" style="zoom:50%;" />
+<img src="Readme.assets/overview.png" alt="overview" style="zoom:50%;" />
 
 
 ## 2 相关研究
@@ -57,8 +57,10 @@
 
   [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale (2020 oct)](https://arxiv.org/abs/2010.11929)
 
-  https://www.jiqizhixin.com/articles/2020-10-05-4
+  [ViViT: A Video Vision Transformer](https://arxiv.org/abs/2103.15691)
 
+  https://www.jiqizhixin.com/articles/2020-10-05-4
+  
   https://www.jiqizhixin.com/articles/2020-05-28-9?fbclid=IwAR3ZMsqDOk5MDBUaGREMEiEMd05ucDViOwALWxGjBgBwdbMeGvlCfKDximg
 
 ### 2.3 Others 其他
@@ -85,11 +87,11 @@ A Guide to Action Recognition (2018) :
 
   **是端到端的训练还是特征提取与分类分开进行**
 
-### 3.2 Simple Vision Transformer model
+### 3.2 Vision Transformer model
 
-+ Vision Transformer
+In the ViDDD model, our input video intercepts 70 consecutive frames of pictures, and each image enters the same ViT model in sequence. For the 70 predicted values, we carry out simple statistics. Calculate the number of predictions for each model category. The largest category was then selected as the predicted result of the video.
 
-  <img src="Readme.assets/ViT_baseline.png" alt="image-20210723140042218" style="zoom: 67%;" />
+![model](Readme.assets/model.png)
 
 ## 4 Experiments
 
@@ -122,25 +124,19 @@ A Guide to Action Recognition (2018) :
 
 ### 4.2 Experiments and results
 
-### 4.2.1 Exp1 
+<img src="Readme.assets/result1.png" alt="result1" style="zoom:48%;" />
 
-+ exp targets: main architecture
-+ dataset 
-+ data Preprocess
-+ network
-+ results
-
-
-
-
-
-
-
-
+<img src="Readme.assets/result2.png" alt="result2" style="zoom:50%;" />
 
 
 
 ## 5 Communication Architecture
+
+To bridge the deep learning side and embedded system side, we need to build a real-time communication system for video uploading and results feedback.
+
+For real-time video uploading, on the client-side, camera capturers will continuously get frames from the camera embedded on the Pi. Frames senders are in charge of keeping sending frames to the server through the “video Steam sending” pipe. Once the frames reach the server-side, frames receivers will save them into a buffer. Every 70 frames in the buffer would be popped by clips dumper and write into a video clip. Model predictor would predict it and save the result to the Redis database.
+
+At the same time, to obtain the results from the prediction model, result retrievers would query the server for the prediction results every 5s through the “Result Returning” pipe. Results replier on the server-side would look up in the database and return it.
 
 ![communication](Readme.assets/communication.png)
 

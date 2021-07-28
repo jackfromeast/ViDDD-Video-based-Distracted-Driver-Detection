@@ -11,6 +11,7 @@ import re
 import numpy as np
 from queue import Queue
 from predict import load_model, predict
+import time
 
 app = Flask(__name__)
 app.config['REDIS_URL'] = 'redis://127.0.0.1:6379/0'
@@ -36,38 +37,34 @@ def index():
 
 @socketio.on('connect', namespace='/web')
 def connect_web():
-    print('\033[33m[INFO]Web client connected: {}\033[0m'.format(request.sid))
+    print('\033[32m[INFO]\033[0mWeb client connected: {}'.format(request.sid))
 
 
 @socketio.on('disconnect', namespace='/web')
 def disconnect_web():
-    print('\033[33m[INFO]Web client disconnected: {}'.format(request.sid))
+    print('\033[32m[INFO]\033[0mWeb client disconnected: {}'.format(request.sid))
 
 
 @socketio.on('connect', namespace='/c2s')
 def connect_cv():
     # join_room('frame_senders', sid=request.sid)
-    print('\033[33m[INFO]CV client connected: {} on c2s namespace.'.format(request.sid))
-
-    global MODEL
-    if MODEL is None:
-        model_setup()
+    print('\033[32m[INFO]\033[0mCV client connected: {} on c2s namespace.'.format(request.sid))
 
 
 @socketio.on('disconnect', namespace='/c2s')
 def disconnect_cv():
     # leave_room('frame_senders', sid=request.sid)
-    print('\033[33m[INFO]CV client disconnected: {} on c2s namespace'.format(request.sid))
+    print('\033[32m[INFO]\033[0mCV client disconnected: {} on c2s namespace.'.format(request.sid))
 
 @socketio.on('connect', namespace='/s2c')
 def connect_cv():
     # join_room('result_receivers', sid=request.sid)
-    print('\033[33m[INFO]CV client connected: {} on s2c namespace.'.format(request.sid))
+    print('\033[32m[INFO]\033[0mCV client connected: {} on s2c namespace.'.format(request.sid))
 
 @socketio.on('disconnect', namespace='/s2c')
 def disconnect_cv():
     # leave_room('result_receivers', sid=request.sid)
-    print('\033[33m[INFO]CV client disconnected: {} on s2c namespace'.format(request.sid))
+    print('\033[32m[INFO]\033[0mCV client disconnected: {} on s2c namespace.'.format(request.sid))
 
 
 @socketio.on('get_results', namespace='/s2c')
@@ -75,7 +72,7 @@ def send_results(message):
     results = redis_client.get('results')
 
     if results is not None:
-        print("\033[34m[Results Replier]Sending results to the client.")
+        print("\033[34m[Results Replier]\033[0mSending results to the client.")
         socketio.emit('results', results, namespace='/s2c')
 
 
@@ -91,7 +88,7 @@ def handle_cv_message(message):
     if frames_count % 70 == 0:
         video_buffer.put((frames_buffer, clips_count))
 
-        print('\033[33m[Clips Dumper] worker_save_video thread started.')
+        print('\033[33m[Clips Dumper]\033[0mA video saving thread is started.')
         worker_save_video = threading.Thread(target=save_video, daemon=True, args=(video_buffer.get()))
         worker_save_video.start()
         
@@ -113,9 +110,8 @@ def save_video(frames, clips_count):
         videoWriter.write(frame)
         count += 1
 
-    print('total count %d' % count)
     videoWriter.release()
-    print("\033[33m[Clips Dumper] the %s video clip has saved." % save_path+clip_file_name)
+    print("\033[33m[Clips Dumper]\033[0mThe %s video clip has saved." % save_path+clip_file_name)
 
     model_predict(save_path+clip_file_name)
 
@@ -133,7 +129,9 @@ def model_setup():
     global MODEL
     if MODEL is None:
         MODEL = load_model()
-        print('\033[35m[Model Predictor]The MODEL has already loaded.')
+        print('\033[35m[Model Predictor]\033[0mThe MODEL has loaded.', flush=True)
+    else:
+        print('\033[35m[Model Predictor]\033[0mThe MODEL has already loaded.')
 
 
 def model_predict(video_path):
@@ -141,19 +139,18 @@ def model_predict(video_path):
     if MODEL is None:
         model_setup()
     
-    print('\033[35m[Model Predictor]Start to predict video %s' % video_path.split('/')[-1])
+    print('\033[35m[Model Predictor]\033[0mStart to predict video %s' % video_path.split('/')[-1])
     result = predict(MODEL, video_path)
 
     clip_index = re.split('[_./]', video_path)[-2]
 
     data = clip_index + '-' + result[0] +  '-' + '%.2f'%result[1] + ';'
 
-    print('\033[35m[Model Predictor]Start to save the result.')
+    print('\033[35m[Model Predictor]\033[0mStart to save the result.')
     save_result(data)
 
 
 def save_result(new_results):
-    print(save_result)
 
     previous_results = redis_client.get('results')
 
@@ -162,15 +159,20 @@ def save_result(new_results):
     else:
 
         new_results = previous_results + new_results
-        print(new_results)
+    
 
     redis_client.set('results', new_results)
-    print('\033[35m[Model Predictor]The result has updated.')
+    print('\033[35m[Model Predictor]\033[0mThe result has updated.')
 
 
 
 if __name__ == "__main__":
     server_ip = '127.0.0.1'
     port = 5001
-    print('[INFO] Starting server at http://{}:{}'.format(server_ip, port))
+    print('\033[32m[INFO]\033[0mStarting server at http://{}:{}'.format(server_ip, port))
+    print('\033[32m[INFO]\033[0mPlease wait for Model to loaded...')
+    if MODEL is None:
+        model_setup()
+
+    print("\033[32m[INFO]\033[0mStart listening to clients' connection...")
     socketio.run(app=app, host=server_ip, port=port)

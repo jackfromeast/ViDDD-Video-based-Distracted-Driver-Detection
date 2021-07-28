@@ -15,22 +15,23 @@ write_lock = False
 
 @sio.event
 def connect():
-    print('[INFO] Successfully connected to server.')
+    print('\033[32m[INFO]\033[0mSuccessfully connected to server.')
 
 
 @sio.event
 def connect_error():
-    print('[INFO] Failed to connect to server.')
+    print('\033[32m[INFO]\033[0mFailed to connect to server.')
 
 
 @sio.event
 def disconnect():
-    print('[INFO] Disconnected from server.')
+    print('\033[32m[INFO]\033[0mDisconnected from server.')
 
 
 @sio.on('results', namespace='/s2c')
 def save_result(message):
-    print('[Results Retriever]Received a result from server. Updata the results.')
+    print('\033[34m[Results Retriever]\033[0mReceived the lastest results from server.')
+    print('\033[34m[Results Retriever]\033[0m %s' % message)
 
     global results_file, write_lock
     if results_file is None:
@@ -58,7 +59,7 @@ class CVClient(object):
         self.count = 0
 
     def setup(self):
-        print('[INFO] Connecting to server http://{}:{}...'.format(
+        print('\033[32m[INFO]\033[0mConnecting to server http://{}:{}...'.format(
             self.server_addr, self.server_port))
 
         # Channel c2s for client sending video stream
@@ -91,7 +92,7 @@ class CVClient(object):
                     },
                     namespace='/c2s')
             self.count += 1
-            print('[Frames Sender]Sended the %d frame to the server.' % self.count)
+            print('\033[33m[Frames Sender]\033[0mSended the %d frame to the server.' % self.count)
 
     def check_exit(self):
         pass
@@ -103,7 +104,7 @@ class CVClient(object):
 class Camera(object):
 
     def __init__(self, fps=30, video_source=0, streamer=None, cam_width=640, cam_height=480):
-        print(f"[Camera Capturer]Initializing camera class with {fps} fps and video_source={video_source}")
+        print("\033[36m[Camera Capturer]\033[0mInitializing camera class with {%d} fps and video_source={%d}" % (fps, video_source))
         self.fps = fps
         self.video_source = video_source
         self.camera = cv2.VideoCapture(self.video_source)
@@ -121,7 +122,7 @@ class Camera(object):
         self.sending_thread = None
         
     def run(self):
-        print("[Camera Capturer]Perparing capture_thread and sending_thread.")
+        print("\033[36m[Camera Capturer]\033[0mPerparing capture_thread and sending_thread.")
     
         # print("[INFO]Creating capture_thread")
         self.capture_thread = threading.Thread(target=self._capture_loop,daemon=True)
@@ -133,10 +134,10 @@ class Camera(object):
 
         self.capture_thread.start()
         self.sending_thread.start()
-        print("[Camera Capturer]Threads started")
+        print("\033[36m[Camera Capturer]\033[0mThreads started")
 
     def _capture_loop(self):
-        print("[Camera Capturer]Camera observation started")
+        print("\033[36m[Camera Capturer]\033[0mCamera observation started")
         while self.isrunning:
             v,frame = self.camera.read()
             if v:
@@ -151,12 +152,12 @@ class Camera(object):
                 self.streamer.send_data(frame, ['success'])
 
     def stop(self):
-        print("[Camera Capturer]Stopping capture_thread and sending_thread")
+        print("\033[36m[Camera Capturer]\033[0mStopping capture_thread and sending_thread")
         self.isrunning = False
         self.release()
     
     def release(self):
-        print("[Camera Capturer]Released camera")
+        print("\033[36m[Camera Capturer]\033[0mReleased camera")
         self.camera.release()
 
 
@@ -170,7 +171,7 @@ class Retriever(object):
         self.isrunning = False
 
     def run(self):
-        print("[Retriever]Perparing retrieve_thread.")
+        print("\033[34m[Results Retriever]\033[0mPerparing retrieve_thread.")
     
         # print("[Retriever]Creating retrieve_thread")
         self.retrieve_thread = threading.Thread(target=self.__retrieve_results,daemon=True)
@@ -179,7 +180,7 @@ class Retriever(object):
         self.isrunning = True
 
         self.retrieve_thread.start()
-        print("[Retriever]Threads started.")
+        print("\033[34m[Results Retriever]\033[0mThreads started.")
 
     def __retrieve_results(self):
         while True:
@@ -187,11 +188,11 @@ class Retriever(object):
                 break
             time.sleep(self.time_interval)
             sio.emit('get_results', 'Give me the current results!', namespace='/s2c')
-            print('[Retriever]Retrieve results from the server.')
+            print('\033[34m[Results Retriever]\033[0mRetrieve results from the server.')
 
     
     def stop(self):
-        print("[Retriever]Stopping retrieve_thread")
+        print("\033[34m[Results Retriever]\033[0mStopping retrieve_thread")
         self.isrunning = False
 
             
@@ -214,7 +215,7 @@ def main(camera, server_addr, stream_fps, cam_width, cam_height):
 
 
     except KeyboardInterrupt:
-        print("[INFO]Exiting...")
+        print("\033[32m[INFO]\033[0mExiting...")
 
     finally:
         end = time.time()
@@ -228,10 +229,10 @@ def main(camera, server_addr, stream_fps, cam_width, cam_height):
         if results_file is not None:
             results_file.close()
 
-        print("[INFO]elapsed time: {:.2f}".format(end-start))
-        print("[INFO]approx. FPS: {:.2f}".format(streamer.count/(end-start)))
+        print("\033[32m[INFO]\033[0melapsed time: {:.2f}".format(end-start))
+        print("\033[32m[INFO]\033[0mapprox. FPS: {:.2f}".format(streamer.count/(end-start)))
 
-        print("[INFO]Program Ending")
+        print("\033[32m[INFO]\033[0mProgram Ending")
 
 
 if __name__ == "__main__":
