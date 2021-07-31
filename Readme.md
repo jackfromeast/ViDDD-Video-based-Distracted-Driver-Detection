@@ -33,7 +33,7 @@
 
 ## 2 相关研究
 
-### 2.1 数据集
+### 2.1 分心驾驶数据集
 
 1. AUC: https://abouelnaga.io/projects/auc-distracted-driver-dataset/ 
 
@@ -50,6 +50,22 @@
    Videos, 14 classes , 7GB
 
    For now, got the **lite version** of the database, which include 2446 70-frames clips.
+   
+   <img src="../../../Library/Application Support/typora-user-images/截屏2021-07-29 下午1.15.37.png" alt="截屏2021-07-29 下午1.15.37" style="zoom:67%;" />
+
+### 2.2 动作识别数据集
+
+1. ARID 暗场景下动作识别
+
+   3784条video clips, 一共8721s，11 action classes.
+
+### 2.3 Our Dataset (To be finished)
+
+All in dark scene.
+
+Classes: DMD + using phone fixed on the panel (watching short videos ~~or guided system~~ , ~~making calls~~,  operating(swipe and clike))
+
+baseline: 8000 video clips, 15 people *  20 min
 
 ### 2.2 Rreference Papers 参考论文
 
@@ -65,7 +81,9 @@
 
 ### 2.3 Others 其他
 
++ A repository contains different implementation of vit :
 
+  https://github.com/lucidrains/vit-pytorch
 
 ## 3 Method 方法
 
@@ -93,6 +111,8 @@ In the ViDDD model, our input video intercepts 70 consecutive frames of pictures
 
 ![model](Readme.assets/model.png)
 
+
+
 ## 4 Experiments
 
 ### 4.1 Dataset 数据集
@@ -111,7 +131,15 @@ In the ViDDD model, our input video intercepts 70 consecutive frames of pictures
 
   - Cut the video into smaller clips containing 70 frames.
   - Label the each clip with the annotation file.
+
+  
+
   - Restructure the folder
+
+
++ 
+
+
 
 + Data PreProcess
 
