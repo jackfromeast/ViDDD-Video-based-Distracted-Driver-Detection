@@ -28,7 +28,7 @@
 
  What we are going to do is distracted driver detection. On the embedded system side, we would use the camera to record the driver's behavior, and dump the video every 5s or 10s. Our current solution is to extract frames of this video under a proper time step in Raspberry Pi, and then send these packaged images to the server side as the raw input for the model prediction. The problem on this side is how to achieve a near real-time dectection. Because the Pi need to wait for the model's results and warn the driver through the buzzer.
 
-<img src="Readme.assets/overview.png" alt="overview" style="zoom:50%;" />
+<div align=center><img src="Readme.assets/overview.png" alt="overview" width="50%" /></div>
 
 
 ## 2 相关研究
@@ -109,13 +109,21 @@ A Guide to Action Recognition (2018) :
 
 In the ViDDD model, our input video intercepts 70 consecutive frames of pictures, and each image enters the same ViT model in sequence. For the 70 predicted values, we carry out simple statistics. Calculate the number of predictions for each model category. The largest category was then selected as the predicted result of the video.
 
-![model](Readme.assets/model.png)
+<div align=center><img src="Readme.assets/model.png" alt="model" width="70%" /></div>
 
+## 4 Communication Architecture
 
+To bridge the deep learning side and embedded system side, we need to build a real-time communication system for video uploading and results feedback.
 
-## 4 Experiments
+For real-time video uploading, on the client-side, camera capturers will continuously get frames from the camera embedded on the Pi. Frames senders are in charge of keeping sending frames to the server through the “video Steam sending” pipe. Once the frames reach the server-side, frames receivers will save them into a buffer. Every 70 frames in the buffer would be popped by clips dumper and write into a video clip. Model predictor would predict it and save the result to the Redis database.
 
-### 4.1 Dataset 数据集
+At the same time, to obtain the results from the prediction model, result retrievers would query the server for the prediction results every 5s through the “Result Returning” pipe. Results replier on the server-side would look up in the database and return it.
+
+![communication](Readme.assets/communication.png)
+
+## 5 Experiments
+
+### 5.1 Dataset 数据集
 
 + Dataset Annotation 数据集标注
 
@@ -125,20 +133,12 @@ In the ViDDD model, our input video intercepts 70 consecutive frames of pictures
 
   对于视频的处理使用FFmpeg或者OpenCV库，FFmpeg下载安装时记得让git走全局代理。
 
-  <img src="Readme.assets/annotation_tool_info.png" alt="annotation_tool_info" style="zoom:75%;" />
-
+   <div align=center><img src="Readme.assets/annotation_tool_info.png" alt="model" width="80%" /></div>
 + Process Raw Dataset
 
   - Cut the video into smaller clips containing 70 frames.
   - Label the each clip with the annotation file.
-
-  
-
   - Restructure the folder
-
-
-+ 
-
 
 
 + Data PreProcess
@@ -150,23 +150,15 @@ In the ViDDD model, our input video intercepts 70 consecutive frames of pictures
   - ToTensor
   - Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
 
-### 4.2 Experiments and results
-
-<img src="Readme.assets/result1.png" alt="result1" style="zoom:50%;" />
-
-<img src="Readme.assets/result2.png" alt="result2" style="zoom:50%;" />
+### 5.2 Experiments and results
 
 
+<div align=center><img src="Readme.assets/result1.png" alt="result1" width="50%" /></div>
 
-## 5 Communication Architecture
+<div align=center><img src="Readme.assets/result2.png" alt="result2" width="50%" /></div>
 
-To bridge the deep learning side and embedded system side, we need to build a real-time communication system for video uploading and results feedback.
+<div align=center><img src="Readme.assets/exp.png" alt="exp" width="80%" /></div>
 
-For real-time video uploading, on the client-side, camera capturers will continuously get frames from the camera embedded on the Pi. Frames senders are in charge of keeping sending frames to the server through the “video Steam sending” pipe. Once the frames reach the server-side, frames receivers will save them into a buffer. Every 70 frames in the buffer would be popped by clips dumper and write into a video clip. Model predictor would predict it and save the result to the Redis database.
-
-At the same time, to obtain the results from the prediction model, result retrievers would query the server for the prediction results every 5s through the “Result Returning” pipe. Results replier on the server-side would look up in the database and return it.
-
-![communication](Readme.assets/communication.png)
 
 ## 6 Code 目录结构
 
