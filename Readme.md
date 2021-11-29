@@ -53,13 +53,7 @@
    
    <img src="../../../Library/Application Support/typora-user-images/截屏2021-07-29 下午1.15.37.png" alt="截屏2021-07-29 下午1.15.37" style="zoom:67%;" />
 
-### 2.2 动作识别数据集
-
-1. ARID 暗场景下动作识别
-
-   3784条video clips, 一共8721s，11 action classes.
-
-### 2.3 Our Dataset (To be finished)
+### 2.2 Our Dataset (To be finished)
 
 All in dark scene.
 
@@ -67,7 +61,7 @@ Classes: DMD + using phone fixed on the panel (watching short videos ~~or guided
 
 baseline: 8000 video clips, 15 people *  20 min
 
-### 2.2 Rreference Papers 参考论文
+### 2.3 Rreference Papers 参考论文
 
 + transformer：
 
@@ -79,7 +73,7 @@ baseline: 8000 video clips, 15 people *  20 min
   
   https://www.jiqizhixin.com/articles/2020-05-28-9?fbclid=IwAR3ZMsqDOk5MDBUaGREMEiEMd05ucDViOwALWxGjBgBwdbMeGvlCfKDximg
 
-### 2.3 Others 其他
+### 2.4 Others 其他
 
 + A repository contains different implementation of vit :
 
