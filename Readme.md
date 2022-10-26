@@ -46,7 +46,7 @@ What we are going to do is distracted driver detection. On the embedded system s
    
    <img src="../../../Library/Application Support/typora-user-images/截屏2021-07-29 下午1.15.37.png" alt="截屏2021-07-29 下午1.15.37" style="zoom:67%;" />
 
-### 2.2 Rreference Papers 参考论文
+### 2.2 Rreference Papers
 
 + transformer：
 
@@ -58,7 +58,7 @@ What we are going to do is distracted driver detection. On the embedded system s
   
   https://www.jiqizhixin.com/articles/2020-05-28-9?fbclid=IwAR3ZMsqDOk5MDBUaGREMEiEMd05ucDViOwALWxGjBgBwdbMeGvlCfKDximg
 
-### 2.3 Others 其他
+### 2.3 Others
 
 + A repository contains different implementation of vit :
 
